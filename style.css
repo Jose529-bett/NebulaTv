@@ -1,0 +1,76 @@
+:root {
+    --bg: #040714;
+    --card: #1a1d29;
+    --blue: #0063e5;
+    --input: #31343e;
+}
+
+body {
+    background: var(--bg);
+    color: white;
+    font-family: 'Segoe UI', sans-serif;
+    margin: 0;
+    overflow-x: hidden;
+}
+
+.hidden { display: none !important; }
+
+/* FOCO PARA CONTROL REMOTO */
+[tabindex]:focus, button:focus, input:focus, .poster:focus {
+    outline: 4px solid white !important;
+    transform: scale(1.05);
+    transition: 0.2s;
+    z-index: 99;
+    box-shadow: 0 0 20px rgba(0, 99, 229, 0.8);
+}
+
+/* LOGIN */
+.login-container {
+    width: 350px;
+    margin: 10% auto;
+    text-align: center;
+    background: var(--card);
+    padding: 40px;
+    border-radius: 10px;
+}
+
+/* NAVBAR */
+.navbar { padding: 20px 50px; background: #090b13; }
+.brand-bar { display: flex; gap: 15px; margin-top: 20px; overflow-x: auto; padding-bottom: 10px; }
+.brand-bar button { 
+    min-width: 150px; padding: 15px; background: var(--card); 
+    border: 1px solid #333; color: white; border-radius: 8px; cursor: pointer;
+}
+
+/* GRID DE PELÍCULAS */
+.movie-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 25px;
+    padding: 40px 50px;
+}
+
+.poster {
+    width: 100%;
+    aspect-ratio: 2/3;
+    background-size: cover;
+    background-position: center;
+    border-radius: 10px;
+    cursor: pointer;
+    border: 2px solid transparent;
+}
+
+/* REPRODUCTOR */
+.player-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: black; z-index: 1000; overflow-y: auto;
+}
+.video-frame { width: 100%; aspect-ratio: 16/9; background: #000; }
+.episodes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; padding: 20px 0; }
+.btn-ep { background: var(--card); color: white; border: 1px solid #444; padding: 15px; border-radius: 5px; }
+
+/* ADMIN */
+.admin-trigger { position: fixed; top: 0; left: 0; width: 40px; height: 40px; z-index: 9999; }
+.admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 20px; }
+.admin-card { background: var(--card); padding: 20px; border-radius: 10px; }
+input, select { width: 100%; padding: 12px; margin: 10px 0; background: var(--input); border: none; color: white; border-radius: 5px; }
