@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nebula+ | TV Experience</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="admin-trigger" onclick="abrirAdmin()"></div>
+
+    <div id="sc-login" class="screen">
+        <div class="login-container">
+            <h1 class="logo-title">NEBULA<span>+</span></h1>
+            <input type="text" id="log-u" placeholder="Usuario" tabindex="1">
+            <input type="password" id="log-p" placeholder="PIN" tabindex="2">
+            <button class="btn-blue" onclick="entrar()" tabindex="3">ENTRAR</button>
+        </div>
+    </div>
+
+    <div id="sc-main" class="screen hidden">
+        <nav class="navbar">
+            <div class="nav-top">
+                <span class="logo-s">NEBULA+</span>
+                <input type="text" id="search-box" placeholder="Buscar..." onkeyup="buscar()" tabindex="4">
+                <button class="avatar" onclick="toggleMenu()" tabindex="5">👤</button>
+                <div id="drop-menu" class="dropdown hidden">
+                    <p id="u-name"></p>
+                    <button class="btn-logout" onclick="cerrarSesion()">Salir</button>
+                </div>
+            </div>
+            <div class="brand-bar">
+                <button onclick="seleccionarMarca('disney')" tabindex="6">DISNEY</button>
+                <button onclick="seleccionarMarca('netflix')" tabindex="7">NETFLIX</button>
+                <button onclick="seleccionarMarca('hbo')" tabindex="8">HBO MAX</button>
+                <button onclick="seleccionarMarca('paramount')" tabindex="9">PARAMOUNT</button>
+                <button onclick="seleccionarMarca('apple')" tabindex="10">APPLE TV</button>
+            </div>
+        </nav>
+
+        <div class="main-content">
+            <div class="tabs">
+                <button id="t-peli" class="active" onclick="cambiarTipo('pelicula')" tabindex="11">PELÍCULAS</button>
+                <button id="t-serie" onclick="cambiarTipo('serie')" tabindex="12">SERIES</button>
+            </div>
+            <h2 id="cat-title">CATÁLOGO</h2>
+            <div id="grid" class="movie-grid"></div>
+        </div>
+    </div>
+
+    <div id="video-player" class="player-overlay hidden">
+        <div class="player-container">
+            <button class="close-player" onclick="cerrarReproductor()" tabindex="100">✕ CERRAR</button>
+            <div class="video-frame"></div>
+            <h2 id="player-title" style="color:white; margin-top:20px;"></h2>
+            
+            <div id="serie-controls" class="hidden">
+                <h3 style="color: #0063e5;">Temporadas</h3>
+                <select id="season-selector" onchange="cargarTemporada(this.value)" tabindex="101"></select>
+                <div id="episodes-grid" class="episodes-grid"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="sc-admin" class="screen hidden">
+        <div class="admin-nav">
+            <h2>Panel de Control</h2>
+            <button onclick="switchScreen('sc-main')">VOLVER</button>
+        </div>
+        <div class="admin-grid">
+            <div class="admin-card">
+                <h3>Contenido</h3>
+                <input type="text" id="c-title" placeholder="Título">
+                <input type="text" id="c-post" placeholder="URL Póster">
+                <input type="text" id="c-video" placeholder="Video (URL o cap1,cap2|cap3)">
+                <select id="c-brand">
+                    <option value="disney">Disney</option>
+                    <option value="netflix">Netflix</option>
+                    <option value="hbo">HBO Max</option>
+                </select>
+                <select id="c-type">
+                    <option value="pelicula">Película</option>
+                    <option value="serie">Serie</option>
+                </select>
+                <button class="btn-blue" onclick="guardarContenido()">PUBLICAR</button>
+            </div>
+            <div class="admin-card">
+                <div class="table-scroll"><table id="movie-list"></table></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
