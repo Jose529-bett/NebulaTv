@@ -1,71 +1,193 @@
-:root { --bg: #040714; --card: #1a1d29; --blue: #0063e5; --input: #252833; --red: #e50914; }
-body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; overflow: hidden; }
-.hidden { display: none !important; }
+const firebaseConfig = { databaseURL: "https://nebula-plus-app-default-rtdb.firebaseio.com/" };
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-/* FOCO GLOBAL */
-.tv-focusable:focus { 
-    outline: none; 
-    border: 3px solid white !important; 
-    transform: scale(1.05); 
-    background-color: var(--blue) !important; 
-    transition: all 0.2s ease-in-out;
+let users = []; 
+let movies = []; 
+let currentBrand = 'disney'; 
+let currentType = 'pelicula';
+let datosSerieActual = []; 
+let videoActualUrl = ""; 
+let hlsInstance = null;
+
+// --- GESTIÓN DE FOCO PARA SMART TV ---
+document.addEventListener('keydown', function(e) {
+    const focusables = Array.from(document.querySelectorAll('.tv-focusable:not(.hidden)'));
+    let index = focusables.indexOf(document.activeElement);
+
+    if (e.keyCode === 13) { // ENTER
+        if (document.activeElement.tagName === 'INPUT') return;
+        document.activeElement.click();
+        return;
+    }
+
+    if (index > -1) {
+        let nextIndex = index;
+        const columns = 6; 
+
+        if (e.keyCode === 39) nextIndex++; 
+        if (e.keyCode === 37) nextIndex--; 
+        if (e.keyCode === 40) nextIndex += columns; 
+        if (e.keyCode === 38) nextIndex -= columns; 
+
+        if (nextIndex >= 0 && nextIndex < focusables.length) {
+            focusables[nextIndex].focus();
+            e.preventDefault();
+        }
+    } else {
+        if(focusables.length > 0) focusables[0].focus();
+    }
+});
+
+// FIREBASE
+db.ref('users').on('value', snap => {
+    const data = snap.val();
+    users = [];
+    if(data) { for(let id in data) { users.push({ ...data[id], firebaseId: id }); } }
+});
+
+db.ref('movies').on('value', snap => {
+    const data = snap.val();
+    movies = [];
+    if(data) { for(let id in data) { movies.push({ ...data[id], firebaseId: id }); } }
+    actualizarVista();
+});
+
+// LOGIN
+function entrar() {
+    const u = document.getElementById('log-u').value;
+    const p = document.getElementById('log-p').value;
+    const user = users.find(x => x.u === u && x.p === p);
+    if(user) {
+        document.getElementById('u-name').innerText = "Perfil: " + u;
+        document.getElementById('sc-login').classList.add('hidden');
+        document.getElementById('sc-main').classList.remove('hidden');
+        setTimeout(() => document.querySelector('.brand-bar .tv-focusable').focus(), 100);
+    } else { alert("Acceso denegado"); }
 }
 
-/* LOGIN */
-.login-overlay { height: 100vh; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle, #1c202d 0%, #040714 100%); }
-.login-box { width: 400px; text-align: center; padding: 40px; background: rgba(26, 29, 41, 0.9); border-radius: 15px; border: 1px solid #31343e; }
-.logo-title { font-size: 40px; font-weight: bold; margin: 0; }
-.logo-title span { color: var(--blue); }
-.login-subtitle { color: #8f98b2; margin-bottom: 20px; font-size: 14px; }
-input { width: 100%; padding: 12px; margin-bottom: 15px; background: var(--input); border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; }
-.btn-primary { background: var(--blue); width: 100%; padding: 15px; border: none; color: white; border-radius: 8px; font-weight: bold; }
+function cerrarSesion() { location.reload(); }
 
-/* NAVBAR & CATALOGO */
-.navbar { padding: 20px 40px; background: var(--bg); border-bottom: 1px solid #1a1d29; }
-.nav-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-.brand-bar { display: flex; gap: 10px; justify-content: center; margin-bottom: 10px; }
-.brand-bar button { background: var(--card); color: white; border: 1px solid #333; padding: 10px; border-radius: 8px; font-size: 12px; font-weight: bold; }
-.filter-bar { display: flex; justify-content: center; gap: 20px; padding: 10px; }
-.filter-btn { background: transparent; border: 2px solid #333; color: white; padding: 8px 25px; border-radius: 20px; font-weight: bold; }
-.filter-btn.active { border-color: var(--blue); color: var(--blue); }
-
-.movie-grid { 
-    display: grid; 
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); 
-    gap: 30px; 
-    padding: 20px 40px; 
-    height: 60vh; 
-    overflow-y: auto; 
-    scroll-behavior: smooth;
-}
-.poster { 
-    width: 100%; 
-    aspect-ratio: 2/3; 
-    background-size: cover; 
-    background-position: center;
-    border-radius: 12px; 
-    border: 3px solid transparent; 
-    cursor: pointer; 
-}
-.poster:focus {
-    transform: scale(1.1);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.5);
-    z-index: 10;
+// CATALOGO
+function seleccionarMarca(b) { 
+    currentBrand = b; 
+    actualizarVista(); 
 }
 
-/* REPRODUCTOR */
-.player-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1000; }
-.video-preview-top { height: 50vh; width: 100%; position: relative; border-bottom: 2px solid var(--blue); }
-.series-footer { height: 50vh; padding: 20px 40px; background: #040714; }
-.horizontal-grid { display: flex; gap: 15px; overflow-x: auto; padding: 15px 0; }
-.btn-ep { min-width: 140px; height: 80px; background: var(--card); color: white; border: 2px solid #333; border-radius: 10px; font-weight: bold; flex-shrink: 0; }
-.btn-expand-screen { position: absolute; bottom: 20px; right: 20px; z-index: 100; background: var(--blue); color: white; border: none; padding: 12px 20px; border-radius: 50px; font-weight: bold; }
-.btn-close-tv { position: absolute; top: 20px; right: 20px; z-index: 110; background: var(--red); color: white; border: none; padding: 10px 20px; border-radius: 5px; }
+function cambiarTipo(t) { 
+    currentType = t; 
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(t === 'pelicula' ? 't-peli' : 't-serie').classList.add('active');
+    actualizarVista(); 
+}
 
-.fullscreen-player { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 2000; }
-.btn-back-to-panel { position: absolute; top: 20px; left: 20px; z-index: 2100; background: rgba(0,0,0,0.7); color: white; border: 1px solid white; padding: 10px; }
+function actualizarVista() {
+    const grid = document.getElementById('grid');
+    if(!grid) return;
+    
+    document.getElementById('cat-title').innerText = currentBrand + " > " + currentType;
+    const filtrados = movies.filter(m => m.brand === currentBrand && m.type === currentType);
+    
+    grid.innerHTML = filtrados.map(m => `
+        <div class="poster tv-focusable" tabindex="0" style="background-image:url('${m.poster}')" 
+             onclick="reproducir('${m.video}', '${m.title}')"></div>
+    `).join('');
 
-/* MENÚ USUARIO */
-.dropdown { position: absolute; right: 40px; top: 80px; background: var(--card); padding: 15px; border-radius: 8px; border: 1px solid #333; z-index: 500; }
-.avatar { background: var(--blue); border: none; color: white; width: 40px; height: 40px; border-radius: 50%; font-size: 20px; cursor: pointer; }
-.btn-logout { background: var(--red); color: white; border: none; padding: 10px; width: 100%; border-radius: 5px; margin-top: 10px; cursor: pointer; }
+    // AUTO-FOCO: Al actualizar, movemos el foco al primer contenido disponible
+    setTimeout(() => {
+        const primerPoster = grid.querySelector('.poster');
+        if(primerPoster) primerPoster.focus();
+    }, 200);
+}
+
+function buscar() {
+    const q = document.getElementById('search-box').value.toLowerCase();
+    const filtered = movies.filter(m => m.title.toLowerCase().includes(q));
+    document.getElementById('grid').innerHTML = filtered.map(m => `
+        <div class="poster tv-focusable" tabindex="0" style="background-image:url('${m.poster}')" 
+             onclick="reproducir('${m.video}', '${m.title}')"></div>
+    `).join('');
+}
+
+// REPRODUCTOR
+function reproducir(cadenaVideo, titulo) {
+    const player = document.getElementById('video-player');
+    document.getElementById('player-title').innerText = titulo;
+    player.classList.remove('hidden');
+
+    const item = movies.find(m => m.title === titulo && m.video === cadenaVideo);
+    
+    if(item && item.type === 'serie') {
+        document.getElementById('serie-controls').classList.remove('hidden');
+        document.getElementById('btn-expand').classList.remove('hidden');
+        document.querySelector('.video-preview-top').style.height = "50vh";
+
+        const temporadas = item.video.split('|');
+        datosSerieActual = temporadas.map(t => t.split(','));
+        document.getElementById('season-selector').innerHTML = datosSerieActual.map((_, i) => `<option value="${i}">Temporada ${i+1}</option>`).join('');
+        cargarTemporada(0); 
+    } else {
+        document.getElementById('serie-controls').classList.add('hidden');
+        document.getElementById('btn-expand').classList.add('hidden');
+        document.querySelector('.video-preview-top').style.height = "100vh";
+        videoActualUrl = cadenaVideo;
+        gestionarFuenteVideo(cadenaVideo, '#mini-player-frame');
+    }
+    setTimeout(() => document.getElementById('btn-expand').focus(), 500);
+}
+
+function cargarTemporada(idx) {
+    const grid = document.getElementById('episodes-grid');
+    const capitulos = datosSerieActual[idx];
+    grid.innerHTML = capitulos.map((link, i) => `<button class="btn-ep tv-focusable" onclick="cambiarEpisodio('${link.trim()}')">EP. ${i+1}</button>`).join('');
+    cambiarEpisodio(capitulos[0].trim());
+}
+
+function cambiarEpisodio(url) {
+    videoActualUrl = url;
+    gestionarFuenteVideo(url, '#mini-player-frame');
+}
+
+function agrandarPantalla() {
+    if(!videoActualUrl) return;
+    document.getElementById('fullscreen-overlay').classList.remove('hidden');
+    gestionarFuenteVideo(videoActualUrl, '#full-video-frame');
+    setTimeout(() => document.querySelector('.btn-back-to-panel').focus(), 500);
+}
+
+function achicarPantalla() { 
+    document.getElementById('fullscreen-overlay').classList.add('hidden'); 
+    document.getElementById('btn-expand').focus();
+}
+
+function gestionarFuenteVideo(url, containerId) {
+    const videoFrame = document.querySelector(containerId);
+    if(hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
+    videoFrame.innerHTML = ''; 
+    const urlLimpia = url.trim();
+    const esDirecto = urlLimpia.toLowerCase().includes('.m3u8') || urlLimpia.toLowerCase().includes('.mp4');
+
+    if (esDirecto) {
+        videoFrame.innerHTML = `<video id="v-core" controls autoplay style="width:100%; height:100%; background:#000;"></video>`;
+        const video = document.getElementById('v-core');
+        if (urlLimpia.toLowerCase().includes('.m3u8') && Hls.isSupported()) {
+            hlsInstance = new Hls(); hlsInstance.loadSource(urlLimpia); hlsInstance.attachMedia(video);
+        } else { video.src = urlLimpia; }
+    } else {
+        videoFrame.innerHTML = `<iframe src="${urlLimpia}" frameborder="0" allowfullscreen style="width:100%; height:100%;"></iframe>`;
+    }
+}
+
+function cerrarReproductor() {
+    if(hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
+    document.getElementById('video-player').classList.add('hidden');
+    const primerPoster = document.querySelector('#grid .poster');
+    if(primerPoster) primerPoster.focus();
+}
+
+function toggleMenu() { 
+    document.getElementById('drop-menu').classList.toggle('hidden'); 
+    if(!document.getElementById('drop-menu').classList.contains('hidden')){
+        document.querySelector('.btn-logout').focus();
+    }
+}
