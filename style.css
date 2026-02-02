@@ -2,14 +2,8 @@
 body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; overflow: hidden; }
 .hidden { display: none !important; }
 
-/* FOCO GLOBAL */
-.tv-focusable:focus { 
-    outline: none; 
-    border: 3px solid white !important; 
-    transform: scale(1.05); 
-    background-color: var(--blue) !important; 
-    transition: all 0.2s ease-in-out;
-}
+/* FOCO */
+.tv-focusable:focus { outline: none; border: 3px solid white !important; transform: scale(1.05); background-color: var(--blue) !important; }
 
 /* LOGIN */
 .login-overlay { height: 100vh; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle, #1c202d 0%, #040714 100%); }
@@ -20,7 +14,7 @@ body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif;
 input { width: 100%; padding: 12px; margin-bottom: 15px; background: var(--input); border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; }
 .btn-primary { background: var(--blue); width: 100%; padding: 15px; border: none; color: white; border-radius: 8px; font-weight: bold; }
 
-/* NAVBAR & CATALOGO */
+/* NAVBAR & CATALOGO (RESTAURADO) */
 .navbar { padding: 20px 40px; background: var(--bg); border-bottom: 1px solid #1a1d29; }
 .nav-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
 .brand-bar { display: flex; gap: 10px; justify-content: center; margin-bottom: 10px; }
@@ -29,29 +23,8 @@ input { width: 100%; padding: 12px; margin-bottom: 15px; background: var(--input
 .filter-btn { background: transparent; border: 2px solid #333; color: white; padding: 8px 25px; border-radius: 20px; font-weight: bold; }
 .filter-btn.active { border-color: var(--blue); color: var(--blue); }
 
-.movie-grid { 
-    display: grid; 
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); 
-    gap: 30px; 
-    padding: 20px 40px; 
-    height: 60vh; 
-    overflow-y: auto; 
-    scroll-behavior: smooth;
-}
-.poster { 
-    width: 100%; 
-    aspect-ratio: 2/3; 
-    background-size: cover; 
-    background-position: center;
-    border-radius: 12px; 
-    border: 3px solid transparent; 
-    cursor: pointer; 
-}
-.poster:focus {
-    transform: scale(1.1);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.5);
-    z-index: 10;
-}
+.movie-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; padding: 20px 40px; height: 55vh; overflow-y: auto; }
+.poster { width: 100%; aspect-ratio: 2/3; background-size: cover; border-radius: 12px; border: 3px solid transparent; cursor: pointer; }
 
 /* REPRODUCTOR */
 .player-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1000; }
@@ -61,7 +34,6 @@ input { width: 100%; padding: 12px; margin-bottom: 15px; background: var(--input
 .btn-ep { min-width: 140px; height: 80px; background: var(--card); color: white; border: 2px solid #333; border-radius: 10px; font-weight: bold; flex-shrink: 0; }
 .btn-expand-screen { position: absolute; bottom: 20px; right: 20px; z-index: 100; background: var(--blue); color: white; border: none; padding: 12px 20px; border-radius: 50px; font-weight: bold; }
 .btn-close-tv { position: absolute; top: 20px; right: 20px; z-index: 110; background: var(--red); color: white; border: none; padding: 10px 20px; border-radius: 5px; }
-
 .fullscreen-player { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 2000; }
 .btn-back-to-panel { position: absolute; top: 20px; left: 20px; z-index: 2100; background: rgba(0,0,0,0.7); color: white; border: 1px solid white; padding: 10px; }
 
