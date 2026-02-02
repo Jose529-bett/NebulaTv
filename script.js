@@ -5,17 +5,13 @@ const db = firebase.database();
 let users = []; let movies = []; let currentBrand = 'disney'; let currentType = 'pelicula';
 let datosSerieActual = []; let videoActualUrl = ""; let hlsInstance = null;
 
-// --- GESTIÓN DE FOCO PARA SMART TV ---
+// --- GESTIÓN DE FOCO MEJORADA ---
 document.addEventListener('keydown', function(e) {
     const focusables = Array.from(document.querySelectorAll('.tv-focusable:not(.hidden)'));
     let index = focusables.indexOf(document.activeElement);
 
     if (e.keyCode === 13) { // ENTER
-        if (document.activeElement.tagName === 'INPUT') {
-            document.activeElement.focus(); // Re-enfocar para forzar teclado
-            return;
-        }
-        document.activeElement.click();
+        if (document.activeElement) document.activeElement.click();
         return;
     }
 
@@ -23,13 +19,41 @@ document.addEventListener('keydown', function(e) {
         let nextIndex = index;
         const columns = 6; 
 
-        if (e.keyCode === 39) nextIndex++; 
-        if (e.keyCode === 37) nextIndex--; 
-        if (e.keyCode === 40) nextIndex += columns; 
-        if (e.keyCode === 38) nextIndex -= columns; 
+        if (e.keyCode === 39) nextIndex++; // Derecha
+        if (e.keyCode === 37) nextIndex--; // Izquierda
+        
+        if (e.keyCode === 40) { // ABAJO
+            // LÓGICA DE SALTO: Si estamos en filtros y no hay nada más abajo en la lista plana inmediato
+            let tempNext = index + 1;
+            // Si el foco actual es un botón de marca o filtro, y queremos ir a los pósteres
+            if (!document.activeElement.classList.contains('poster')) {
+                const primerPoster = document.querySelector('#grid .poster');
+                if (primerPoster) {
+                    primerPoster.focus();
+                    e.preventDefault();
+                    return;
+                }
+            }
+            nextIndex += columns;
+        }
+
+        if (e.keyCode === 38) { // ARRIBA
+            // Si estamos en la primera fila de pósteres y damos arriba, ir a filtros
+            if (document.activeElement.classList.contains('poster')) {
+                const filtros = document.querySelectorAll('.filter-btn');
+                if (index - columns < focusables.indexOf(document.querySelector('.poster'))) {
+                    filtros[0].focus();
+                    e.preventDefault();
+                    return;
+                }
+            }
+            nextIndex -= columns;
+        }
 
         if (nextIndex >= 0 && nextIndex < focusables.length) {
             focusables[nextIndex].focus();
+            // Scroll automático para TV
+            focusables[nextIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
             e.preventDefault();
         }
     } else {
@@ -60,12 +84,13 @@ function entrar() {
         document.getElementById('u-name').innerText = "Perfil: " + u;
         document.getElementById('sc-login').classList.add('hidden');
         document.getElementById('sc-main').classList.remove('hidden');
-        setTimeout(() => document.querySelector('.brand-bar .tv-focusable').focus(), 100);
+        setTimeout(() => document.querySelector('.brand-bar .tv-focusable').focus(), 200);
     } else { alert("Acceso denegado"); }
 }
 
 function cerrarSesion() {
-    location.reload(); // Recarga para limpiar todo el estado en la TV
+    document.getElementById('sc-main').classList.add('hidden');
+    document.getElementById('sc-login').classList.remove('hidden');
 }
 
 // CATALOGO
@@ -90,8 +115,13 @@ function actualizarVista() {
     if(!grid) return;
     document.getElementById('cat-title').innerText = currentBrand + " > " + currentType;
     const filtrados = movies.filter(m => m.brand === currentBrand && m.type === currentType);
+    
     grid.innerHTML = filtrados.map(m => `
-        <div class="poster tv-focusable" tabindex="0" style="background-image:url('${m.poster}')" onclick="reproducir('${m.video}', '${m.title}')"></div>
+        <div class="poster tv-focusable" 
+             tabindex="0" 
+             style="background-image:url('${m.poster}')" 
+             onclick="reproducir('${m.video}', '${m.title}')">
+        </div>
     `).join('');
 }
 
@@ -109,7 +139,7 @@ function reproducir(cadenaVideo, titulo) {
     document.getElementById('player-title').innerText = titulo;
     player.classList.remove('hidden');
 
-    const item = movies.find(m => m.title === titulo && m.video === cadenaVideo);
+    const item = movies.find(m => m.title === titulo && (m.video === cadenaVideo || m.type === 'serie'));
     
     if(item && item.type === 'serie') {
         document.getElementById('serie-controls').classList.remove('hidden');
