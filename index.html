@@ -1,85 +1,85 @@
- <!DOCTYPE html>
-‎<html lang="es">
-‎<head>
-‎    <meta charset="UTF-8">
-‎    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-‎    <title>Nebula+ Smart TV</title>
-‎    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-‎    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-‎    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-‎    <link rel="stylesheet" href="style.css">
-‎</head>
-‎<body>
-‎
-‎    <div id="sc-login" class="screen">
-‎        <div class="login-overlay">
-‎            <div class="login-box">
-‎                <h1 class="logo-title">NEBULA<span>+</span></h1>
-‎                <p class="login-subtitle">Inicia sesión con tu cuenta</p>
-‎                <input type="text" id="log-u" class="tv-focusable" placeholder="Usuario" inputmode="text" onclick="this.focus()">
-‎                <input type="password" id="log-p" class="tv-focusable" placeholder="Contraseña" inputmode="text" onclick="this.focus()">
-‎                <button class="btn-primary tv-focusable" onclick="entrar()">ENTRAR</button>
-‎            </div>
-‎        </div>
-‎    </div>
-‎
-‎    <div id="sc-main" class="screen hidden">
-‎        <nav class="navbar">
-‎            <div class="nav-top">
-‎                <span class="logo-title" style="font-size: 26px; margin:0;">NEBULA<span>+</span></span>
-‎                <input type="text" id="search-box" class="tv-focusable" placeholder="Buscar..." onkeyup="buscar()" inputmode="text" onclick="this.focus()">
-‎                <div class="user-zone">
-‎                    <button class="avatar tv-focusable" onclick="toggleMenu()">👤</button>
-‎                    <div id="drop-menu" class="dropdown hidden">
-‎                        <div class="u-greeting" id="u-name">Hola</div>
-‎                        <button class="btn-logout tv-focusable" onclick="cerrarSesion()">Cerrar Sesión</button>
-‎                    </div>
-‎                </div>
-‎            </div>
-‎            
-‎            <div class="brand-bar">
-‎                <button class="tv-focusable" onclick="seleccionarMarca('disney')">DISNEY</button>
-‎                <button class="tv-focusable" onclick="seleccionarMarca('netflix')">NETFLIX</button>
-‎                <button class="tv-focusable" onclick="seleccionarMarca('hbo')">HBO MAX</button>
-‎                <button class="tv-focusable" onclick="seleccionarMarca('paramount')">PARAMOUNT</button>
-‎                <button class="tv-focusable" onclick="seleccionarMarca('apple')">APPLE TV</button>
-‎                <button class="tv-focusable" onclick="seleccionarMarca('espn')">ESPN</button>
-‎                <button class="tv-focusable" onclick="seleccionarMarca('natgeo')">NAT GEO</button>
-‎            </div>
-‎        </nav>
-‎
-‎        <div id="filter-bar" class="filter-bar">
-‎            <button id="t-peli" class="tv-focusable filter-btn active" onclick="cambiarTipo('pelicula')">PELÍCULAS</button>
-‎            <button id="t-serie" class="tv-focusable filter-btn" onclick="cambiarTipo('serie')">SERIES</button>
-‎        </div>
-‎
-‎        <h2 id="cat-title" style="margin-left: 40px; font-size: 18px; color: #8f98b2; text-transform: uppercase;"></h2>
-‎        <div class="movie-grid" id="grid"></div>
-‎    </div>
-‎
-‎    <div id="video-player" class="player-overlay hidden">
-‎        <button class="btn-close-tv tv-focusable" onclick="cerrarReproductor()">✕ CERRAR</button>
-‎        <div class="xuper-container">
-‎            <div class="video-preview-top">
-‎                <div class="video-frame" id="mini-player-frame" style="width:100%; height:100%;"></div>
-‎                <button id="btn-expand" class="btn-expand-screen tv-focusable" onclick="agrandarPantalla()">⛶ AGRANDAR PANTALLA</button>
-‎            </div>
-‎            <div id="serie-controls" class="series-footer hidden">
-‎                <div class="footer-header">
-‎                    <h2 id="player-title" class="title-text"></h2>
-‎                    <div class="season-box">
-‎                        <select id="season-selector" class="tv-focusable xuper-select" onchange="cargarTemporada(this.value)"></select>
-‎                    </div>
-‎                </div>
-‎                <div id="episodes-grid" class="horizontal-grid"></div>
-‎            </div>
-‎        </div>
-‎        <div id="fullscreen-overlay" class="fullscreen-player hidden">
-‎            <button class="btn-back-to-panel tv-focusable" onclick="achicarPantalla()">✕ VOLVER AL PANEL</button>
-‎            <div id="full-video-frame" style="width:100%; height:100%;"></div>
-‎        </div>
-‎    </div>
-‎
-‎    <script src="script.js"></script>
-‎</body>
-‎</html>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nebula+ Smart TV</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="sc-login" class="screen">
+        <div class="login-overlay">
+            <div class="login-box">
+                <h1 class="logo-title">NEBULA<span>+</span></h1>
+                <p class="login-subtitle">Inicia sesión con tu cuenta</p>
+                <input type="text" id="log-u" class="tv-focusable" placeholder="Usuario">
+                <input type="password" id="log-p" class="tv-focusable" placeholder="Contraseña">
+                <button class="btn-primary tv-focusable" onclick="entrar()">ENTRAR</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="sc-main" class="screen hidden">
+        <nav class="navbar">
+            <div class="nav-top">
+                <span class="logo-title" style="font-size: 26px; margin:0;">NEBULA<span>+</span></span>
+                <input type="text" id="search-box" class="tv-focusable" placeholder="Buscar..." onkeyup="buscar()">
+                <div class="user-zone">
+                    <button class="avatar tv-focusable" onclick="toggleMenu()">👤</button>
+                    <div id="drop-menu" class="dropdown hidden">
+                        <div class="u-greeting" id="u-name">Hola</div>
+                        <button class="btn-logout tv-focusable" onclick="cerrarSesion()">Cerrar Sesión</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="brand-bar">
+                <button class="tv-focusable" onclick="seleccionarMarca('disney')">DISNEY</button>
+                <button class="tv-focusable" onclick="seleccionarMarca('netflix')">NETFLIX</button>
+                <button class="tv-focusable" onclick="seleccionarMarca('hbo')">HBO MAX</button>
+                <button class="tv-focusable" onclick="seleccionarMarca('paramount')">PARAMOUNT</button>
+                <button class="tv-focusable" onclick="seleccionarMarca('apple')">APPLE TV</button>
+                <button class="tv-focusable" onclick="seleccionarMarca('espn')">ESPN</button>
+                <button class="tv-focusable" onclick="seleccionarMarca('natgeo')">NAT GEO</button>
+            </div>
+        </nav>
+
+        <div id="filter-bar" class="filter-bar">
+            <button id="t-peli" class="tv-focusable filter-btn active" onclick="cambiarTipo('pelicula')">PELÍCULAS</button>
+            <button id="t-serie" class="tv-focusable filter-btn" onclick="cambiarTipo('serie')">SERIES</button>
+        </div>
+
+        <h2 id="cat-title" style="margin-left: 40px; font-size: 18px; color: #8f98b2; text-transform: uppercase;"></h2>
+        <div class="movie-grid" id="grid"></div>
+    </div>
+
+    <div id="video-player" class="player-overlay hidden">
+        <button class="btn-close-tv tv-focusable" onclick="cerrarReproductor()">✕ CERRAR</button>
+        <div class="xuper-container">
+            <div class="video-preview-top">
+                <div class="video-frame" id="mini-player-frame" style="width:100%; height:100%;"></div>
+                <button id="btn-expand" class="btn-expand-screen tv-focusable" onclick="agrandarPantalla()">⛶ AGRANDAR PANTALLA</button>
+            </div>
+            <div id="serie-controls" class="series-footer hidden">
+                <div class="footer-header">
+                    <h2 id="player-title" class="title-text"></h2>
+                    <div class="season-box">
+                        <select id="season-selector" class="tv-focusable xuper-select" onchange="cargarTemporada(this.value)"></select>
+                    </div>
+                </div>
+                <div id="episodes-grid" class="horizontal-grid"></div>
+            </div>
+        </div>
+        <div id="fullscreen-overlay" class="fullscreen-player hidden">
+            <button class="btn-back-to-panel tv-focusable" onclick="achicarPantalla()">✕ VOLVER AL PANEL</button>
+            <div id="full-video-frame" style="width:100%; height:100%;"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
