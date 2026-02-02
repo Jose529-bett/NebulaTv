@@ -1,48 +1,63 @@
 // CONFIGURACIÓN FIREBASE
-const firebaseConfig = {
-    databaseURL: "https://nebula-plus-app-default-rtdb.firebaseio.com/"
-};
+const firebaseConfig = { databaseURL: "https://nebula-plus-app-default-rtdb.firebaseio.com/" };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-let movies = [];
-let users = [];
-let currentBrand = 'disney';
-let currentType = 'pelicula';
-let datosSerieActual = [];
-let hlsInstance = null;
+let users = []; let movies = []; let currentBrand = 'disney'; let currentType = 'pelicula';
+let datosSerieActual = []; let hlsInstance = null;
 
-// ESCUCHAR DATOS
-db.ref('movies').on('value', snap => {
-    const data = snap.val();
-    movies = [];
-    if(data) {
-        for(let id in data) movies.push({ ...data[id], firebaseId: id });
-    }
-    actualizarVista();
-    renderMovieTable();
-});
-
+// CARGAR DATOS
 db.ref('users').on('value', snap => {
     const data = snap.val();
     users = [];
-    if(data) {
-        for(let id in data) users.push({ ...data[id], firebaseId: id });
+    if(data) { for(let id in data) { users.push({ ...data[id], firebaseId: id }); } }
+    renderUserTable();
+});
+
+db.ref('movies').on('value', snap => {
+    const data = snap.val();
+    movies = [];
+    if(data) { for(let id in data) { movies.push({ ...data[id], firebaseId: id }); } }
+    actualizarVista(); renderMovieTable();
+});
+
+// NAVEGACIÓN SMART TV (D-PAD)
+document.addEventListener('keydown', (e) => {
+    const items = Array.from(document.querySelectorAll('.tv-focusable, .poster, input, select, .btn-ep'));
+    const visibleItems = items.filter(i => i.offsetParent !== null);
+    let index = visibleItems.indexOf(document.activeElement);
+
+    if (e.keyCode === 39) { // Derecha
+        index = (index + 1) % visibleItems.length;
+        visibleItems[index].focus();
+    } else if (e.keyCode === 37) { // Izquierda
+        index = (index - 1 + visibleItems.length) % visibleItems.length;
+        visibleItems[index].focus();
+    } else if (e.keyCode === 40) { // Abajo
+        index = Math.min(index + 5, visibleItems.length - 1); // Salto aproximado de fila
+        visibleItems[index].focus();
+    } else if (e.keyCode === 38) { // Arriba
+        index = Math.max(index - 5, 0);
+        visibleItems[index].focus();
+    } else if (e.keyCode === 13) { // OK
+        // El clic se ejecuta solo
+    } else if (e.keyCode === 27 || e.keyCode === 10009 || e.keyCode === 461) { // BACK
+        if (!document.getElementById('video-player').classList.contains('hidden')) {
+            cerrarReproductor();
+        }
     }
 });
 
-// LOGICA DE ACCESO
+// LOGICA APP
 function entrar() {
     const u = document.getElementById('log-u').value;
     const p = document.getElementById('log-p').value;
     const user = users.find(x => x.u === u && x.p === p);
-
-    if(user || (u === 'admin' && p === '2026')) {
-        document.getElementById('u-name').innerText = "Usuario: " + u;
+    if(user || (u === 'admin' && p === '1234')) {
+        document.getElementById('u-name').innerText = u;
         switchScreen('sc-main');
-    } else {
-        alert("Credenciales incorrectas");
-    }
+        setTimeout(() => document.querySelector('.brand-bar button').focus(), 500);
+    } else { alert("Acceso denegado"); }
 }
 
 function switchScreen(id) {
@@ -50,74 +65,56 @@ function switchScreen(id) {
     document.getElementById(id).classList.remove('hidden');
 }
 
-// RENDERIZADO
 function actualizarVista() {
     const grid = document.getElementById('grid');
     if(!grid) return;
-    
-    document.getElementById('cat-title').innerText = currentBrand.toUpperCase() + " > " + currentType.toUpperCase();
-    
     const filtrados = movies.filter(m => m.brand === currentBrand && m.type === currentType);
-    
-    grid.innerHTML = filtrados.map((m, index) => `
-        <div class="poster" 
-             tabindex="${index + 20}" 
+    grid.innerHTML = filtrados.map(m => `
+        <div class="poster" tabindex="0" 
              style="background-image:url('${m.poster}')" 
-             onclick="reproducir('${m.video}', '${m.title}')"
-             onkeypress="if(event.key==='Enter') reproducir('${m.video}', '${m.title}')">
-        </div>
-    `).join('');
+             onclick="reproducir('${m.video}', '${m.title}')">
+        </div>`).join('');
 }
 
-// MOTOR DE VIDEO
-function reproducir(url, titulo) {
+function reproducir(cadenaVideo, titulo) {
     const player = document.getElementById('video-player');
     document.getElementById('player-title').innerText = titulo;
     player.classList.remove('hidden');
-
-    const item = movies.find(m => m.title === titulo);
-
-    if(item && item.type === 'serie') {
+    
+    if(cadenaVideo.includes('|')) { // Es serie
         document.getElementById('serie-controls').classList.remove('hidden');
-        const temporadas = item.video.split('|');
+        const temporadas = cadenaVideo.split('|');
         datosSerieActual = temporadas.map(t => t.split(','));
-        
-        const selector = document.getElementById('season-selector');
-        selector.innerHTML = datosSerieActual.map((_, i) => `<option value="${i}">Temporada ${i+1}</option>`).join('');
+        document.getElementById('season-selector').innerHTML = datosSerieActual.map((_, i) => `<option value="${i}">Temporada ${i+1}</option>`).join('');
         cargarTemporada(0);
     } else {
         document.getElementById('serie-controls').classList.add('hidden');
-        gestionarFuente(url);
+        gestionarFuenteVideo(cadenaVideo);
     }
+    document.getElementById('btn-cerrar-v').focus();
 }
 
-function gestionarFuente(url) {
-    const container = document.querySelector('.video-frame');
+function gestionarFuenteVideo(url) {
+    const videoFrame = document.querySelector('.video-frame');
     if(hlsInstance) hlsInstance.destroy();
-    container.innerHTML = '';
-
-    const link = url.trim();
-    if(link.includes('.m3u8') || link.includes('.mp4')) {
-        container.innerHTML = `<video id="vid" controls autoplay style="width:100%; height:100%"></video>`;
-        const video = document.getElementById('vid');
-        if(link.includes('.m3u8') && Hls.isSupported()) {
-            hlsInstance = new Hls();
-            hlsInstance.loadSource(link);
-            hlsInstance.attachMedia(video);
-        } else {
-            video.src = link;
-        }
+    videoFrame.innerHTML = ''; 
+    const u = url.trim();
+    if (u.includes('.m3u8') || u.includes('.mp4')) {
+        videoFrame.innerHTML = `<video id="main-v" controls autoplay style="width:100%; height:100%;"></video>`;
+        const video = document.getElementById('main-v');
+        if (u.includes('.m3u8') && Hls.isSupported()) {
+            hlsInstance = new Hls(); hlsInstance.loadSource(u); hlsInstance.attachMedia(video);
+        } else { video.src = u; }
     } else {
-        container.innerHTML = `<iframe src="${link}" frameborder="0" allowfullscreen style="width:100%; height:100%"></iframe>`;
+        videoFrame.innerHTML = `<iframe src="${u}" allowfullscreen></iframe>`;
     }
 }
 
 function cargarTemporada(idx) {
     const grid = document.getElementById('episodes-grid');
     grid.innerHTML = datosSerieActual[idx].map((link, i) => `
-        <button class="btn-ep" onclick="gestionarFuente('${link.trim()}')" tabindex="${200+i}">EP ${i+1}</button>
+        <button class="btn-ep" onclick="gestionarFuenteVideo('${link.trim()}')">E${i+1}</button>
     `).join('');
-    gestionarFuente(datosSerieActual[idx][0]);
 }
 
 function cerrarReproductor() {
@@ -126,34 +123,10 @@ function cerrarReproductor() {
     document.querySelector('.video-frame').innerHTML = '';
 }
 
-// ADMIN ACCIONES
-function abrirAdmin() {
-    if(prompt("PIN ADMIN:") === "2026") switchScreen('sc-admin');
-}
-
-function guardarContenido() {
-    const data = {
-        title: document.getElementById('c-title').value,
-        poster: document.getElementById('c-post').value,
-        video: document.getElementById('c-video').value,
-        brand: document.getElementById('c-brand').value,
-        type: document.getElementById('c-type').value
-    };
-    if(data.title && data.video) {
-        db.ref('movies').push(data).then(() => alert("Publicado"));
-    }
-}
-
-function borrarMovie(id) {
-    if(confirm("¿Borrar?")) db.ref('movies/' + id).remove();
-}
-
-function renderMovieTable() {
-    const table = document.getElementById('movie-list');
-    table.innerHTML = `<tr><th>Título</th><th>Acción</th></tr>` + 
-        movies.map(m => `<tr><td>${m.title}</td><td><button onclick="borrarMovie('${m.firebaseId}')">Eliminar</button></td></tr>`).join('');
-}
-
-function seleccionarMarca(m) { currentBrand = m; actualizarVista(); }
+function seleccionarMarca(b) { currentBrand = b; actualizarVista(); }
 function cambiarTipo(t) { currentType = t; actualizarVista(); }
-function cerrarSesion() { location.reload(); }
+function cerrarSesion() { switchScreen('sc-login'); }
+function abrirAdmin() { if(prompt("PIN:") === "2026") switchScreen('sc-admin'); }
+
+// Iniciar foco
+window.onload = () => document.getElementById('log-u').focus();
