@@ -11,25 +11,28 @@ document.addEventListener('keydown', function(e) {
     let index = focusables.indexOf(document.activeElement);
 
     if (e.keyCode === 13) { // ENTER
+        if (document.activeElement.tagName === 'INPUT') {
+            document.activeElement.focus(); // Re-enfocar para forzar teclado
+            return;
+        }
         document.activeElement.click();
         return;
     }
 
     if (index > -1) {
         let nextIndex = index;
-        const columns = 6; // Ajusta según tu diseño de grid
+        const columns = 6; 
 
-        if (e.keyCode === 39) nextIndex++; // Derecha
-        if (e.keyCode === 37) nextIndex--; // Izquierda
-        if (e.keyCode === 40) nextIndex += columns; // Abajo
-        if (e.keyCode === 38) nextIndex -= columns; // Arriba
+        if (e.keyCode === 39) nextIndex++; 
+        if (e.keyCode === 37) nextIndex--; 
+        if (e.keyCode === 40) nextIndex += columns; 
+        if (e.keyCode === 38) nextIndex -= columns; 
 
         if (nextIndex >= 0 && nextIndex < focusables.length) {
             focusables[nextIndex].focus();
             e.preventDefault();
         }
     } else {
-        // Si nada tiene foco, empezar por el primero disponible
         if(focusables.length > 0) focusables[0].focus();
     }
 });
@@ -57,22 +60,18 @@ function entrar() {
         document.getElementById('u-name').innerText = "Perfil: " + u;
         document.getElementById('sc-login').classList.add('hidden');
         document.getElementById('sc-main').classList.remove('hidden');
-        // Al entrar, dar foco al primer botón de la marca
         setTimeout(() => document.querySelector('.brand-bar .tv-focusable').focus(), 100);
     } else { alert("Acceso denegado"); }
 }
 
 function cerrarSesion() {
-    document.getElementById('sc-main').classList.add('hidden');
-    document.getElementById('sc-login').classList.remove('hidden');
-    document.getElementById('drop-menu').classList.add('hidden');
+    location.reload(); // Recarga para limpiar todo el estado en la TV
 }
 
 // CATALOGO
 function seleccionarMarca(b) { 
     currentBrand = b; 
     actualizarVista(); 
-    // Mover foco al primer póster generado
     setTimeout(() => {
         const primerPoster = document.querySelector('#grid .poster');
         if(primerPoster) primerPoster.focus();
@@ -128,7 +127,6 @@ function reproducir(cadenaVideo, titulo) {
         videoActualUrl = cadenaVideo;
         gestionarFuenteVideo(cadenaVideo, '#mini-player-frame');
     }
-    // Dar foco al botón de cerrar o expandir al abrir
     setTimeout(() => document.getElementById('btn-expand').focus(), 500);
 }
 
@@ -177,7 +175,6 @@ function gestionarFuenteVideo(url, containerId) {
 function cerrarReproductor() {
     if(hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
     document.getElementById('video-player').classList.add('hidden');
-    // Devolver foco al catálogo
     const primerPoster = document.querySelector('#grid .poster');
     if(primerPoster) primerPoster.focus();
 }
