@@ -5,6 +5,35 @@ const db = firebase.database();
 let users = []; let movies = []; let currentBrand = 'disney'; let currentType = 'pelicula';
 let datosSerieActual = []; let videoActualUrl = ""; let hlsInstance = null;
 
+// --- GESTIÓN DE FOCO PARA SMART TV ---
+document.addEventListener('keydown', function(e) {
+    const focusables = Array.from(document.querySelectorAll('.tv-focusable:not(.hidden)'));
+    let index = focusables.indexOf(document.activeElement);
+
+    if (e.keyCode === 13) { // ENTER
+        document.activeElement.click();
+        return;
+    }
+
+    if (index > -1) {
+        let nextIndex = index;
+        const columns = 6; // Ajusta según tu diseño de grid
+
+        if (e.keyCode === 39) nextIndex++; // Derecha
+        if (e.keyCode === 37) nextIndex--; // Izquierda
+        if (e.keyCode === 40) nextIndex += columns; // Abajo
+        if (e.keyCode === 38) nextIndex -= columns; // Arriba
+
+        if (nextIndex >= 0 && nextIndex < focusables.length) {
+            focusables[nextIndex].focus();
+            e.preventDefault();
+        }
+    } else {
+        // Si nada tiene foco, empezar por el primero disponible
+        if(focusables.length > 0) focusables[0].focus();
+    }
+});
+
 // FIREBASE
 db.ref('users').on('value', snap => {
     const data = snap.val();
@@ -28,6 +57,8 @@ function entrar() {
         document.getElementById('u-name').innerText = "Perfil: " + u;
         document.getElementById('sc-login').classList.add('hidden');
         document.getElementById('sc-main').classList.remove('hidden');
+        // Al entrar, dar foco al primer botón de la marca
+        setTimeout(() => document.querySelector('.brand-bar .tv-focusable').focus(), 100);
     } else { alert("Acceso denegado"); }
 }
 
@@ -38,7 +69,15 @@ function cerrarSesion() {
 }
 
 // CATALOGO
-function seleccionarMarca(b) { currentBrand = b; actualizarVista(); }
+function seleccionarMarca(b) { 
+    currentBrand = b; 
+    actualizarVista(); 
+    // Mover foco al primer póster generado
+    setTimeout(() => {
+        const primerPoster = document.querySelector('#grid .poster');
+        if(primerPoster) primerPoster.focus();
+    }, 200);
+}
 
 function cambiarTipo(t) { 
     currentType = t; 
@@ -89,6 +128,8 @@ function reproducir(cadenaVideo, titulo) {
         videoActualUrl = cadenaVideo;
         gestionarFuenteVideo(cadenaVideo, '#mini-player-frame');
     }
+    // Dar foco al botón de cerrar o expandir al abrir
+    setTimeout(() => document.getElementById('btn-expand').focus(), 500);
 }
 
 function cargarTemporada(idx) {
@@ -107,9 +148,13 @@ function agrandarPantalla() {
     if(!videoActualUrl) return;
     document.getElementById('fullscreen-overlay').classList.remove('hidden');
     gestionarFuenteVideo(videoActualUrl, '#full-video-frame');
+    setTimeout(() => document.querySelector('.btn-back-to-panel').focus(), 500);
 }
 
-function achicarPantalla() { document.getElementById('fullscreen-overlay').classList.add('hidden'); }
+function achicarPantalla() { 
+    document.getElementById('fullscreen-overlay').classList.add('hidden'); 
+    document.getElementById('btn-expand').focus();
+}
 
 function gestionarFuenteVideo(url, containerId) {
     const videoFrame = document.querySelector(containerId);
@@ -132,6 +177,14 @@ function gestionarFuenteVideo(url, containerId) {
 function cerrarReproductor() {
     if(hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
     document.getElementById('video-player').classList.add('hidden');
+    // Devolver foco al catálogo
+    const primerPoster = document.querySelector('#grid .poster');
+    if(primerPoster) primerPoster.focus();
 }
 
-function toggleMenu() { document.getElementById('drop-menu').classList.toggle('hidden'); }
+function toggleMenu() { 
+    document.getElementById('drop-menu').classList.toggle('hidden'); 
+    if(!document.getElementById('drop-menu').classList.contains('hidden')){
+        document.querySelector('.btn-logout').focus();
+    }
+}
